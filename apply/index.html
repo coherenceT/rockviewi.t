@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en-ZA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Apply — IT Career Foundation School</title>
+    <meta
+      name="description"
+      content="Apply for the full-time IT programme starting February 2027. Seven short steps, with a draft saved in your browser."
+    />
+    <meta name="theme-color" content="#0d4f8b" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header id="site-header" class="site-header"></header>
+
+    <main id="main">
+      <section class="section">
+        <div class="container">
+          <h1>Apply to the school</h1>
+          <p class="section__lead">
+            Seven short steps. You can save a draft in this browser and come back to it later. Nothing is payable on
+            this website.
+          </p>
+
+          <div id="apply-restored" class="mt-4"></div>
+
+          <div class="progress mt-5" id="apply-progress-wrap" role="progressbar" aria-valuemin="1" aria-labelledby="apply-heading">
+            <div class="progress__bar" id="apply-progress"></div>
+          </div>
+          <h2 id="apply-heading" class="visually-hidden">Application steps</h2>
+          <ol class="steps" id="apply-steps"></ol>
+
+          <form class="form" id="apply-form" novalidate>
+            <div id="apply-fields"></div>
+            <div id="apply-errors"></div>
+            <div class="btn-row" id="apply-nav"></div>
+          </form>
+
+          <p class="muted mt-5" id="apply-draft-status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+
+    <footer id="site-footer" class="site-footer"></footer>
+
+    <noscript>
+      <div class="container">
+        <p class="notice notice--danger">
+          The application form needs JavaScript. Please enable it, or contact admissions so they can help you apply.
+        </p>
+      </div>
+    </noscript>
+
+    <script type="module" src="/src/pages/apply.ts"></script>
+  </body>
+</html>

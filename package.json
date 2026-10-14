@@ -1,0 +1,37 @@
+{
+  "name": "it-career-foundation-admissions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Admissions website and application pipeline for a full-time IT skills school (Northdale, Pietermaritzburg).",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:pages": "wrangler pages dev dist --kv RATE_LIMIT --persist-to .wrangler/state",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test tests/e2e/smoke.spec.ts",
+    "test:e2e:all": "playwright test",
+    "vitals": "node scripts/vitals.mjs",
+    "cf:preview": "npm run build && wrangler pages deploy dist --project-name it-career-foundation --branch preview",
+    "cf:deploy": "npm run build && wrangler pages deploy dist --project-name it-career-foundation --branch main"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241022.0",
+    "@playwright/test": "^1.48.2",
+    "@types/node": "^22.20.5",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4",
+    "wrangler": "^3.85.0"
+  }
+}

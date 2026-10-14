@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en-ZA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Check your application status — IT Career Foundation School</title>
+    <meta name="description" content="Enter your reference number and email address to see the status of your application." />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#0d4f8b" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header id="site-header" class="site-header"></header>
+
+    <main id="main">
+      <section class="section">
+        <div class="container">
+          <h1>Check your application status</h1>
+          <p class="section__lead">
+            Enter the reference number from your confirmation email, and the email address you applied with. This page
+            shows your status only — never your documents or personal details.
+          </p>
+
+          <form class="form mt-5" id="status-form" novalidate>
+            <div class="field">
+              <label for="status-reference">Reference number</label>
+              <p class="field__hint" id="status-reference-hint">For example IT-2027-000123</p>
+              <input
+                type="text"
+                id="status-reference"
+                name="referenceNumber"
+                autocomplete="off"
+                inputmode="text"
+                aria-describedby="status-reference-hint"
+                required
+              />
+            </div>
+            <div class="field">
+              <label for="status-email">Email address</label>
+              <input type="email" id="status-email" name="email" autocomplete="email" inputmode="email" required />
+            </div>
+            <div class="btn-row">
+              <button class="btn btn--primary" type="submit" id="status-submit">Check status</button>
+            </div>
+          </form>
+
+          <div id="status-result" class="mt-5" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer id="site-footer" class="site-footer"></footer>
+    <script type="module" src="/src/pages/status.ts"></script>
+  </body>
+</html>

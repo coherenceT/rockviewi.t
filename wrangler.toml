@@ -1,0 +1,18 @@
+# Cloudflare Pages project configuration.
+# Used by `wrangler pages dev` locally and `wrangler pages deploy`.
+# Secrets (SUPABASE_SERVICE_ROLE_KEY, TURNSTILE_SECRET, FIELD_ENCRYPTION_KEY)
+# are NOT here - set them with `wrangler pages secret put` or the dashboard.
+
+name = "it-career-foundation"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
+
+# Rate-limit counter store (5 submissions per IP per hour, see RATE_LIMIT_MAX).
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_KV_PREVIEW_NAMESPACE_ID"
+
+[vars]
+ENVIRONMENT = "development"
+EMAIL_PROVIDER = "dev"

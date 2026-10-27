@@ -3126,9 +3126,10 @@ h3 {
   height: 104px;
   border-bottom: 1px solid var(--night-line);
   background-image:
-    radial-gradient(circle, rgba(255, 255, 255, 0.16) 1px, transparent 1px),
-    linear-gradient(135deg, #1f5eff 0%, #0f38b4 55%, #061a44 100%);
+    radial-gradient(circle, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(135deg, #1f5eff 0%, #1b49c4 55%, #12307f 100%);
   background-size: 14px 14px, 100% 100%;
+  opacity: 0.55;
 }
 
 .path__covered,

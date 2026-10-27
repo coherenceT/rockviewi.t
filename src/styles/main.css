@@ -841,8 +841,8 @@ input[aria-invalid=true], select[aria-invalid=true], textarea[aria-invalid=true]
   height: 5.5rem;
   border-bottom: 2px solid var(--ink);
   background-image:
-    radial-gradient(rgb(255 255 255 / 18%) 1px, transparent 1px),
-    linear-gradient(135deg, #1f5eff 0%, #0f38b4 55%, #061a44 100%);
+    radial-gradient(rgb(31 94 255 / 22%) 1px, transparent 1px),
+    linear-gradient(135deg, #f4f8ff 0%, #dfeaff 55%, #c8dcff 100%);
   background-size: 14px 14px, 100% 100%;
 }
 

@@ -119,10 +119,18 @@ function renderTerms(): void {
       h('li', { text: `Morning core: ${programme.schedule.morningCore}. Afternoon pathway: ${programme.schedule.afternoonPathway}.` }),
       h('li', { text: programme.schedule.friday }),
       h('li', { text: `Class size: a maximum of ${programme.maxLearnersPerLecturer} learners per lecturer.` }),
-      h('li', { text: `Standard fee: ${formatRand(fees.standardTotal)}. Monthly plan: ${formatRand(fees.monthly.amount)} for ${fees.monthly.months} months, plus a once-off registration fee of ${formatRand(fees.registration.amount)}.` }),
-      h('li', { text: `Upfront option: ${formatRand(fees.upfront.amount)} in full, paid before the end of January 2027.` }),
+      h('li', {
+        text: `Tuition is set by the pathway and is paid monthly for ${fees.months} months: ${courses.pathways
+          .map(
+            (pathway) =>
+              `${pathway.shortName} ${formatRand(pathway.tuition.monthly)} a month (${formatRand(pathway.tuition.total)})`,
+          )
+          .join('; ')}.`,
+      }),
+      h('li', { text: fees.examFeesCoveredLine }),
+      h('li', { text: `${fees.registration.placeholder} ${fees.upfront.placeholder}` }),
       h('li', { text: fees.earlyBird.displayLine }),
-      h('li', { text: `Sponsor a seat: ${formatRand(courses.sponsor.amount)} per learner. An enquiry only, never a payment on this site.` }),
+      h('li', { text: `Sponsor a seat: ${courses.sponsor.note}` }),
     ),
 
     h('h2', { class: 'mt-6', text: 'What an application does not do' }),

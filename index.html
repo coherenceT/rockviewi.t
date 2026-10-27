@@ -8,7 +8,7 @@
       name="description"
       content="Full-time IT career training in Northdale, Pietermaritzburg. Three pathways, a portfolio, work-integrated learning and job-search support. February to November 2027."
     />
-    <meta name="theme-color" content="#0d4f8b" />
+    <meta name="theme-color" content="#f3f5ee" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
@@ -16,73 +16,227 @@
     <header id="site-header" class="site-header"></header>
 
     <main id="main">
-      <section class="hero">
-        <div class="container">
-          <p class="hero__eyebrow">Full-time · February to November 2027</p>
-          <h1>Practical IT career training, built around a portfolio</h1>
-          <p class="hero__lead">
-            A ten month, full-time programme in Northdale, Pietermaritzburg. Every learner completes a shared morning
-            core, then specialises in one of three afternoon pathways.
-          </p>
+      <section class="hero" id="overview" data-brand-spot="school" data-spot-chip="01 School">
+        <div class="container hero__layout">
+          <div class="hero__copy">
+            <p class="hero__tag"><span class="hero__tag-dot" aria-hidden="true"></span> February 2027 intake is open</p>
+            <h1>Practical IT career training, <span class="marker">built on real work.</span></h1>
+            <p class="hero__lead">
+              Ten months in Northdale, Pietermaritzburg. A shared morning core, an afternoon pathway of your choice,
+              and a portfolio you can put in front of an employer.
+            </p>
+            <div class="btn-row hero__actions">
+              <a class="btn btn--primary" href="/apply">Start your application</a>
+              <a class="btn btn--quiet" href="#pathways" data-brand-ref="pathways">See the three pathways</a>
+            </div>
+            <dl class="hero__specs" id="hero-facts"></dl>
+          </div>
 
-          <dl class="hero__facts" id="hero-facts"></dl>
+          <aside class="hero__board" aria-label="What the programme week looks like">
+            <p class="board__label">What the week looks like</p>
+            <div class="board-card board-card--week" id="hero-week"></div>
+            <div class="board-card board-card--intake">
+              <p class="board-card__kicker">Next intake</p>
+              <strong>Feb 2027</strong>
+              <span>Applications open</span>
+            </div>
+            <div class="board-card board-card--leave">
+              <p class="board-card__kicker">You leave with</p>
+              <ul>
+                <li>A portfolio of built work</li>
+                <li>Work-integrated learning</li>
+                <li>CV and interview practice</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
 
-          <div class="btn-row">
-            <a class="btn btn--primary" href="/apply">Apply now</a>
-            <a class="btn btn--secondary" href="#pathways">See the pathways</a>
+        <div class="ticker" aria-label="Skills you will practise">
+          <div class="ticker__track">
+            <div class="ticker__group">
+              <span class="ticker__item">Hardware</span><i aria-hidden="true"></i>
+              <span class="ticker__item">Operating systems</span><i aria-hidden="true"></i>
+              <span class="ticker__item">Networks</span><i aria-hidden="true"></i>
+              <span class="ticker__item">JavaScript</span><i aria-hidden="true"></i>
+              <span class="ticker__item">SQL</span><i aria-hidden="true"></i>
+              <span class="ticker__item">Linux</span><i aria-hidden="true"></i>
+              <span class="ticker__item">Security</span><i aria-hidden="true"></i>
+              <span class="ticker__item">Cloud</span><i aria-hidden="true"></i>
+              <span class="ticker__item">User support</span><i aria-hidden="true"></i>
+              <span class="ticker__item">Spreadsheets</span><i aria-hidden="true"></i>
+              <span class="ticker__item">Git</span><i aria-hidden="true"></i>
+              <span class="ticker__item">Portfolio</span><i aria-hidden="true"></i>
+              <span class="ticker__item">Interviews</span><i aria-hidden="true"></i>
+            </div>
+            <div class="ticker__group" aria-hidden="true">
+              <span class="ticker__item">Hardware</span><i></i>
+              <span class="ticker__item">Operating systems</span><i></i>
+              <span class="ticker__item">Networks</span><i></i>
+              <span class="ticker__item">JavaScript</span><i></i>
+              <span class="ticker__item">SQL</span><i></i>
+              <span class="ticker__item">Linux</span><i></i>
+              <span class="ticker__item">Security</span><i></i>
+              <span class="ticker__item">Cloud</span><i></i>
+              <span class="ticker__item">User support</span><i></i>
+              <span class="ticker__item">Spreadsheets</span><i></i>
+              <span class="ticker__item">Git</span><i></i>
+              <span class="ticker__item">Portfolio</span><i></i>
+              <span class="ticker__item">Interviews</span><i></i>
+            </div>
           </div>
         </div>
       </section>
 
       <section class="section" aria-labelledby="why-heading">
-        <div class="container">
-          <h2 id="why-heading">Why this school</h2>
-          <p class="section__lead">
-            The programme is designed to be practised, not just studied. Four things shape the way it runs.
-          </p>
-          <ul class="tick-list" id="why-list"></ul>
+        <div class="container split">
+          <div class="split__aside">
+            <h2 id="why-heading">You will not just watch.</h2>
+            <p class="section__lead">
+              The programme is practised, not just studied. Each module ends in work you can show, and the portfolio
+              grows with you from February to November.
+            </p>
+            <p class="aside-note">One shared morning core. One afternoon pathway. Ten months of doing the work.</p>
+          </div>
+          <ul class="commitments" id="why-list"></ul>
         </div>
       </section>
 
-      <section class="section section--soft" id="pathways" aria-labelledby="pathways-heading">
+      <section class="section section--blueprint" id="pathways" aria-labelledby="pathways-heading" data-brand-spot="pathways" data-spot-chip="02 Pathways">
         <div class="container">
-          <h2 id="pathways-heading">Three pathways</h2>
-          <p class="section__lead">
-            Everyone does the same shared morning core. In the afternoon you choose one pathway and go deeper.
-          </p>
+          <div class="section-head">
+            <div>
+              <h2 id="pathways-heading">Choose your afternoons.</h2>
+              <p class="section__lead">
+                Everyone does the same morning core. In the afternoon you pick one pathway and go deeper, with four
+                modules across the two semesters.
+              </p>
+            </div>
+            <p class="section-note">Same fee, same core, three different specialisms.</p>
+          </div>
           <div class="grid grid--3" id="pathway-cards"></div>
         </div>
       </section>
 
-      <section class="section" id="fees" aria-labelledby="fees-heading">
+      <section class="section" id="certifications" aria-labelledby="certifications-heading">
         <div class="container">
-          <h2 id="fees-heading">Fees and how to pay</h2>
-          <p class="section__lead" id="fees-lead"></p>
+          <div class="section-head">
+            <div>
+              <h2 id="certifications-heading">Certifications you can earn.</h2>
+              <p class="section__lead">
+                Vendor exams are written in two windows during the year, and your certification exam fees are covered
+                by the school. One card per certification, with what you can actually do once you pass it.
+              </p>
+            </div>
+            <p class="section-note">Seven certifications across the three pathways.</p>
+          </div>
 
-          <div id="early-bird-panel"></div>
-          <div id="fees-table"></div>
-          <div id="payment-options"></div>
+          <div class="cert-grid">
+            <article class="cert-card">
+              <div class="cert-card__logo"><img src="/certifications/comptia.svg" alt="CompTIA logo" width="150" height="28" loading="lazy" /></div>
+              <h3><span class="cert-card__vendor">Networking</span>CompTIA Network+</h3>
+              <p>Set up, run and troubleshoot the networks a business depends on.</p>
+            </article>
+            <article class="cert-card">
+              <div class="cert-card__logo"><img src="/certifications/comptia.svg" alt="CompTIA logo" width="150" height="28" loading="lazy" /></div>
+              <h3><span class="cert-card__vendor">Security</span>CompTIA Security+</h3>
+              <p>Spot a security threat, contain it and handle it the right way.</p>
+            </article>
+            <article class="cert-card">
+              <div class="cert-card__logo"><img src="/certifications/azure.svg" alt="Microsoft Azure logo" width="176" height="51" loading="lazy" /></div>
+              <h3><span class="cert-card__vendor">Microsoft · AZ-900</span>Azure Fundamentals</h3>
+              <p>Understand cloud services and what Microsoft Azure actually offers.</p>
+            </article>
+            <article class="cert-card">
+              <div class="cert-card__logo cert-card__logo--wide"><img src="/certifications/aws.svg" alt="Amazon Web Services logo" width="120" height="72" loading="lazy" /></div>
+              <h3><span class="cert-card__vendor">Amazon · CLF</span>AWS Cloud Practitioner</h3>
+              <p>Understand cloud services and how Amazon Web Services is used.</p>
+            </article>
+            <article class="cert-card">
+              <div class="cert-card__logo"><img src="/certifications/azure.svg" alt="Microsoft Azure logo" width="176" height="51" loading="lazy" /></div>
+              <h3><span class="cert-card__vendor">Microsoft · AZ-104</span>Azure Administrator</h3>
+              <p>Manage Azure systems, users and access from day to day.</p>
+            </article>
+            <article class="cert-card">
+              <div class="cert-card__logo cert-card__logo--wide"><img src="/certifications/python-institute.svg" alt="Python Institute logo" width="160" height="39" loading="lazy" /></div>
+              <h3><span class="cert-card__vendor">Python Institute · PCEP</span>Entry-Level Python Programmer</h3>
+              <p>Write and debug basic Python programs with confidence.</p>
+            </article>
+            <article class="cert-card">
+              <div class="cert-card__logo cert-card__logo--wide"><img src="/certifications/python-institute.svg" alt="Python Institute logo" width="160" height="39" loading="lazy" /></div>
+              <h3><span class="cert-card__vendor">Python Institute · PCAP</span>Associate Python Programmer</h3>
+              <p>Build larger, object-oriented Python programs and test them.</p>
+            </article>
+          </div>
+
+          <p class="cert-disclaimer">
+            All certification names and logos belong to their respective owners. Rockview I.T. is not endorsed by
+            these vendors unless stated. We are not claiming authorised partner or test-centre status here.
+          </p>
         </div>
       </section>
 
-      <section class="section section--soft" aria-labelledby="apply-heading">
+      <section class="section" id="fees" aria-labelledby="fees-heading" data-brand-spot="fees" data-spot-chip="03 Fees">
         <div class="container">
-          <h2 id="apply-heading">How to apply</h2>
-          <p class="section__lead">
-            The application has seven short steps. You can save a draft in this browser and come back to it, and you
-            will need a certified copy of your ID or passport plus your highest qualification.
-          </p>
-          <ol class="tick-list" id="apply-steps"></ol>
-          <div class="btn-row mt-5">
-            <a class="btn btn--primary" href="/apply">Start your application</a>
-            <a class="btn btn--secondary" href="/status">Check an existing application</a>
+          <div class="section-head">
+            <div>
+              <h2 id="fees-heading">Three pathways. Three tuitions.</h2>
+              <p class="section__lead" id="fees-lead"></p>
+            </div>
+            <p class="section-note">No payment is taken on this website.</p>
+          </div>
+
+          <div class="fees-layout">
+            <div class="fees-aside">
+              <div class="price-plate" id="fees-highlight"></div>
+              <div id="early-bird-panel"></div>
+            </div>
+            <div class="fees-main">
+              <div id="fees-table"></div>
+              <div id="payment-options"></div>
+            </div>
+          </div>
+
+          <div id="fee-calculator" class="mt-5"></div>
+        </div>
+      </section>
+
+      <section class="section section--blueprint" aria-labelledby="apply-heading" data-brand-spot="apply" data-spot-chip="04 Apply">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <h2 id="apply-heading">Seven steps. No payment on this site.</h2>
+              <p class="section__lead">
+                You can save a draft in this browser and come back to it later. Have a certified copy of your ID or
+                passport and your highest qualification ready.
+              </p>
+            </div>
+            <p class="section-note">Applications are open for the February 2027 intake.</p>
+          </div>
+
+          <div class="apply-panel">
+            <ol class="apply-list" id="apply-steps"></ol>
+            <aside class="apply-aside" data-brand-spot="status" data-spot-chip="05 Status">
+              <p class="aside-note">Already applied?</p>
+              <p>Use your reference number and the email address you applied with.</p>
+              <a class="text-link" href="/status">Check your application status</a>
+              <div class="btn-row mt-4">
+                <a class="btn btn--primary" href="/apply">Start your application</a>
+              </div>
+            </aside>
           </div>
         </div>
       </section>
 
       <section class="section" id="faq" aria-labelledby="faq-heading">
-        <div class="container">
-          <h2 id="faq-heading">Questions</h2>
+        <div class="container split split--faq">
+          <div class="split__aside">
+            <h2 id="faq-heading">Ask before you apply.</h2>
+            <p class="section__lead">
+              The questions we are asked most, answered plainly. If yours is not here, the admissions team is the
+              right place to ask.
+            </p>
+            <p class="aside-note">Admissions details are in the footer, including email and phone.</p>
+          </div>
           <div class="faq" id="faq-list"></div>
         </div>
       </section>

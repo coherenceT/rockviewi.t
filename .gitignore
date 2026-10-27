@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.freebuff/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.DS_Store
+*.log
+
+# Local secrets - never commit. Only the placeholder example is tracked.
+.env
+.env.*
+!.env.example
+
+# Supabase CLI local state
+supabase/.branches
+supabase/.temp
+/freebuff-sites-build/
+
+# Local tooling and archives - not part of the site
+.venv-logo-render/
+*.zip
+.wrangler-dev.pid

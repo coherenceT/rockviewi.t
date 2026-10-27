@@ -1,7 +1,7 @@
 import { logWarn } from './logger';
 
 /**
- * Fixed-window counters in Workers KV.
+ * Fixed-window counters in an optional Workers KV binding.
  *
  * Two operations, on purpose:
  *
@@ -12,9 +12,8 @@ import { logWarn } from './logger';
  *    their five hourly attempts.
  *
  * KV is eventually consistent, so the counter can undercount under a burst.
- * That is an acceptable trade for slowing abuse on a low-volume admissions
- * form without adding a Durable Object. Cloudflare rate limiting rules can be
- * layered on top in the dashboard with no code change.
+ * If no binding exists (as on Freebuff Sites), these helpers are fail-open;
+ * configure an edge rate limit at the hosting layer where available.
  */
 
 export interface RateLimitResult {
@@ -22,7 +21,7 @@ export interface RateLimitResult {
   limit: number;
   remaining: number;
   resetAt: number;
-  /** True when no KV binding is configured, so nothing was enforced. */
+  /** True when no KV binding is configured or an operation failed. */
   unavailable: boolean;
 }
 

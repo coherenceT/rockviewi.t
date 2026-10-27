@@ -8,7 +8,7 @@
       name="description"
       content="Apply for the full-time IT programme starting February 2027. Seven short steps, with a draft saved in your browser."
     />
-    <meta name="theme-color" content="#0d4f8b" />
+    <meta name="theme-color" content="#f3f5ee" />
     <meta name="robots" content="noindex" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
@@ -17,15 +17,26 @@
     <header id="site-header" class="site-header"></header>
 
     <main id="main">
-      <section class="section">
+      <section class="section section--blueprint" data-brand-spot="apply" data-spot-chip="04 Apply">
         <div class="container">
-          <h1>Apply to the school</h1>
-          <p class="section__lead">
-            Seven short steps. You can save a draft in this browser and come back to it later. Nothing is payable on
-            this website.
-          </p>
+          <div class="apply-intro">
+            <div>
+              <p class="hero__tag"><span class="hero__tag-dot" aria-hidden="true"></span> February 2027 intake</p>
+              <h1>Apply to the school</h1>
+              <p class="section__lead">
+                Seven short steps. You can save a draft in this browser and come back to it later. Nothing is payable
+                on this website.
+              </p>
+            </div>
+            <p class="section-note">Have your certified ID or passport and your highest qualification ready.</p>
+          </div>
 
           <div id="apply-restored" class="mt-4"></div>
+
+          <p class="notice notice--info apply-status-hint" data-brand-spot="status" data-spot-chip="05 Status">
+            Already applied? <a href="/status">Check your application status</a> with your reference number and
+            email address.
+          </p>
 
           <div class="progress mt-5" id="apply-progress-wrap" role="progressbar" aria-valuemin="1" aria-labelledby="apply-heading">
             <div class="progress__bar" id="apply-progress"></div>

@@ -22,7 +22,17 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+/**
+ * Optional: a real staff account, used to prove the note-adding policy works
+ * for a signed-in person and not just for the service key. Without it those
+ * two proofs report as skipped; everything else still runs.
+ */
+const STAFF_EMAIL = process.env.SUPABASE_STAFF_EMAIL;
+const STAFF_PASSWORD = process.env.SUPABASE_STAFF_PASSWORD;
+const staffConfigured = Boolean(SUPABASE_URL && ANON_KEY && STAFF_EMAIL && STAFF_PASSWORD);
+
 const configured = Boolean(SUPABASE_URL && ANON_KEY && SERVICE_KEY);
+const staffSuite = staffConfigured ? describe : describe.skip;
 
 const suite = configured ? describe : describe.skip;
 
@@ -196,6 +206,23 @@ suite('row level security', () => {
     expect(data?.status).toBe('received');
   });
 
+  it('the anon key cannot append a note to the audit trail', async () => {
+    const { error } = await anon.from('application_events').insert({
+      application_id: applicationId!,
+      event_type: 'note_added',
+      note: 'forged by anon',
+    });
+    expect(error).not.toBeNull();
+
+    const { data } = await service
+      .from('application_events')
+      .select('id')
+      .eq('application_id', applicationId!)
+      .eq('event_type', 'note_added')
+      .maybeSingle();
+    expect(data).toBeNull();
+  });
+
   it('the anon key cannot update or delete the early-bird counter', async () => {
     const update = await anon.from('early_bird_counter').update({ paid_count: 999 }).eq('id', 1);
     expect(update.error).not.toBeNull();
@@ -265,5 +292,102 @@ suite('row level security', () => {
     const retention = new Date(data!.retention_until as string).getTime();
     const fiveYearsOut = Date.now() + 4.9 * 365 * 24 * 60 * 60 * 1000;
     expect(retention).toBeGreaterThan(fiveYearsOut);
+  });
+});
+
+staffSuite('staff note on the audit trail', () => {
+  let staff: SupabaseClient;
+  let service: SupabaseClient;
+  let applicationId: string | null = null;
+  let staffId: string | null = null;
+  const marker = `rls-note-${Date.now()}@example.invalid`;
+
+  beforeAll(async () => {
+    if (!staffConfigured) return;
+    service = createClient(SUPABASE_URL!, SERVICE_KEY!, { auth: { persistSession: false } });
+    staff = createClient(SUPABASE_URL!, ANON_KEY!, { auth: { persistSession: false } });
+
+    const { error: signInError } = await staff.auth.signInWithPassword({
+      email: STAFF_EMAIL!,
+      password: STAFF_PASSWORD!,
+    });
+    if (signInError) throw new Error(`staff sign-in failed: ${signInError.message}`);
+    staffId = (await staff.auth.getUser()).data.user?.id ?? null;
+
+    const { data, error } = await service
+      .from('applications')
+      .insert({
+        pathway: 'c',
+        start_date: '2027-02-01',
+        payment_option: 'monthly',
+        first_name: 'Note',
+        surname: 'Fixture',
+        date_of_birth: '1999-01-01',
+        email: marker,
+        mobile: '0820000002',
+        city: 'Pietermaritzburg',
+        suburb: 'Northdale',
+        highest_qualification: 'National Senior Certificate',
+        school_name: 'Fixture School',
+        year_completed: 2023,
+        consent_version: 'rls-test',
+        source: 'rls test',
+      })
+      .select('id')
+      .single();
+    if (error) throw new Error(`fixture insert failed: ${error.message}`);
+    applicationId = data.id as string;
+  });
+
+  afterAll(async () => {
+    if (!staffConfigured || !applicationId) return;
+    await staff.auth.signOut();
+    await service.from('applications').delete().eq('id', applicationId);
+  });
+
+  it("a signed-in staff member's note is accepted and attributed to them", async () => {
+    const note = 'Documents verified against the original.';
+    const { error } = await staff.from('application_events').insert({
+      application_id: applicationId!,
+      event_type: 'note_added',
+      note,
+      actor_id: staffId,
+    });
+    expect(error).toBeNull();
+
+    const { data } = await service
+      .from('application_events')
+      .select('actor_id, actor_label, note')
+      .eq('application_id', applicationId!)
+      .eq('event_type', 'note_added')
+      .maybeSingle();
+
+    expect(data?.note).toBe(note);
+    expect(data?.actor_id).toBe(staffId);
+    // Stamped by the database, not trusted from the client.
+    expect(data?.actor_label).toBeTruthy();
+  });
+
+  it('a staff member cannot forge a status change event', async () => {
+    const { error } = await staff.from('application_events').insert({
+      application_id: applicationId!,
+      event_type: 'status_changed',
+      from_status: 'received',
+      to_status: 'accepted_payment_pending',
+      actor_id: staffId,
+      note: 'forged',
+    });
+    // Only note_added passes the WITH CHECK of the insert policy.
+    expect(error).not.toBeNull();
+  });
+
+  it('a staff member cannot attribute a note to a colleague', async () => {
+    const { error } = await staff.from('application_events').insert({
+      application_id: applicationId!,
+      event_type: 'note_added',
+      note: 'written under someone else\u2019s name',
+      actor_id: '00000000-0000-4000-8000-000000000000',
+    });
+    expect(error).not.toBeNull();
   });
 });

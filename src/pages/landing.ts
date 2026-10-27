@@ -1,8 +1,14 @@
 import '../styles/main.css';
 import { initLayout } from '../components/layout';
-import { renderEarlyBirdPanel, renderFeesTable, renderPaymentOptions } from '../components/fees';
+import {
+  examFeesCoveredLine,
+  renderEarlyBirdPanel,
+  renderFeeCalculator,
+  renderFeesTable,
+  renderPaymentOptions,
+} from '../components/fees';
 import { renderPathwayCards } from '../components/pathways';
-import { courses, fees } from '../../shared/courses';
+import { courses, fees, formatRand } from '../../shared/courses';
 import { legal, programme, school } from '../../shared/config';
 import { h, render } from '../lib/dom';
 
@@ -31,31 +37,96 @@ function renderHeroFacts(): void {
       'div',
       {},
       h('dt', { text: 'Class size' }),
-      h('dd', { text: `Maximum ${programme.maxLearnersPerLecturer} learners per lecturer` }),
+      h('dd', { text: `${programme.maxLearnersPerLecturer} learners per lecturer, maximum` }),
+    ),
+  );
+}
+
+/** The pinned week card in the hero noticeboard, kept in step with config. */
+function renderWeekBoard(): void {
+  render(
+    '#hero-week',
+    h('p', { class: 'board-card__kicker', text: 'Your week' }),
+    h(
+      'dl',
+      { class: 'week-list' },
+      h(
+        'div',
+        {},
+        h('dt', { text: 'Morning core' }),
+        h('dd', { text: programme.schedule.morningCore }),
+      ),
+      h(
+        'div',
+        {},
+        h('dt', { text: 'Afternoon pathway' }),
+        h('dd', { text: programme.schedule.afternoonPathway }),
+      ),
+      h(
+        'div',
+        {},
+        h('dt', { text: 'Fridays' }),
+        h('dd', { text: programme.schedule.friday }),
+      ),
     ),
   );
 }
 
 function renderWhyList(): void {
+  const commitments = [
+    {
+      title: 'Every module ends in something you built',
+      copy: 'Configure a computer, secure a small network, ship a web app or fix a broken system. The work is the assessment, not a multiple-choice paper.',
+    },
+    {
+      title: 'A portfolio, assembled as you go',
+      copy: 'You collect the projects across the ten months, so you leave with proof you can show an employer rather than a certificate alone.',
+    },
+    {
+      title: 'Work-integrated learning before you finish',
+      copy: 'A short placement or project in the second semester, with career support on Fridays and practice for the interview.',
+    },
+    {
+      title: 'Small classes, real attention',
+      copy: `A maximum of ${programme.maxLearnersPerLecturer} learners per lecturer, so the person teaching you knows the work you have done.`,
+    },
+  ];
+
   render(
     '#why-list',
-    h('li', {
-      text: 'Practical training: every module ends in something you built, configured, secured or fixed.',
-    }),
-    h('li', { text: 'A portfolio you can show an employer, assembled across the ten months.' }),
-    h('li', {
-      text: 'Work-integrated learning: a short placement or project in the second semester, with career support on Fridays.',
-    }),
-    h('li', {
-      text: `Small classes: a maximum of ${programme.maxLearnersPerLecturer} learners per lecturer.`,
-    }),
+    ...commitments.map((item) =>
+      h(
+        'li',
+        {},
+        h('h3', { text: item.title }),
+        h('p', { text: item.copy }),
+      ),
+    ),
   );
 }
 
 function renderFeesLead(): void {
   render(
     '#fees-lead',
-    `The programme costs ${courses.currency} ${fees.standardTotal.toLocaleString('en-ZA')} in total on the standard plan. The table below shows every option, exactly as the school publishes it.`,
+    `Tuition depends on the pathway you choose and is paid monthly for ${fees.months} months. ${examFeesCoveredLine()} The table below shows every pathway, exactly as the school publishes it.`,
+  );
+}
+
+function renderFeesHighlight(): void {
+  const monthly = courses.pathways.map((pathway) => pathway.tuition.monthly);
+  const totals = courses.pathways.map((pathway) => pathway.tuition.total);
+
+  render(
+    '#fees-highlight',
+    h('p', { class: 'price-plate__label', text: `Tuition per month, ${courses.intakeYear}` }),
+    h('p', {
+      class: 'price-plate__value',
+      text: `${formatRand(Math.min(...monthly))} – ${formatRand(Math.max(...monthly))}`,
+    }),
+    h('p', {
+      class: 'price-plate__note',
+      text: `${formatRand(Math.min(...totals))} to ${formatRand(Math.max(...totals))} over ${fees.months} months, depending on your pathway. Exam fees covered.`,
+    }),
   );
 }
 
@@ -70,7 +141,10 @@ const APPLY_STEPS = [
 ];
 
 function renderApplySteps(): void {
-  render('#apply-steps', ...APPLY_STEPS.map((step) => h('li', { text: step })));
+  render(
+    '#apply-steps',
+    ...APPLY_STEPS.map((step) => h('li', {}, h('span', { class: 'apply-step__text', text: step }))),
+  );
 }
 
 interface FaqEntry {
@@ -112,12 +186,29 @@ function renderFaq(): void {
       ],
     },
     {
+      question: 'Do I pay extra for exams?',
+      answer: [
+        h('p', { class: 'faq__covered', text: examFeesCoveredLine() }),
+        h('p', {
+          text: 'No. We cover the exam fees for the certifications in your pathway. [Add your retake policy here.]',
+        }),
+      ],
+    },
+    {
       question: 'How does payment work?',
       answer: [
         h('p', {
-          text: `Standard plan: ${fees.monthly.amount.toLocaleString('en-ZA')} rand a month for ${fees.monthly.months} months, plus a once-off registration fee of ${fees.registration.amount.toLocaleString('en-ZA')} rand. Paying upfront is ${fees.upfront.amount.toLocaleString('en-ZA')} rand in full before the end of January 2027.`,
+          text: `Tuition is paid monthly for ${fees.months} months, and the amount depends on your pathway: ${courses.pathways
+            .map(
+              (pathway) =>
+                `${pathway.shortName} ${formatRand(pathway.tuition.monthly)} a month (${formatRand(pathway.tuition.total)})`,
+            )
+            .join('; ')}.`,
         }),
         h('p', { text: fees.earlyBird.displayLine }),
+        h('p', {
+          text: `${fees.registration.placeholder} ${fees.upfront.placeholder} Debit order, EFT and deposit options are confirmed at registration.`,
+        }),
         vatNote ? h('p', {}, vatNote) : h('p'),
         h('p', {
           text: 'Sponsoring a seat is an enquiry, not a payment: no payment is taken on this site.',
@@ -151,11 +242,14 @@ function renderFaq(): void {
 function main(): void {
   initLayout();
   renderHeroFacts();
+  renderWeekBoard();
   renderWhyList();
   renderPathwayCards('#pathway-cards');
   renderFeesLead();
+  renderFeesHighlight();
   renderEarlyBirdPanel('#early-bird-panel');
   renderFeesTable('#fees-table');
+  renderFeeCalculator('#fee-calculator');
   renderPaymentOptions('#payment-options');
   renderApplySteps();
   renderFaq();

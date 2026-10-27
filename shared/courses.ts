@@ -21,11 +21,23 @@ export interface SalaryRange {
   period: string;
 }
 
+export interface Tuition {
+  monthly: number;
+  months: number;
+  total: number;
+}
+
+/** Which illustrated icon belongs to a pathway. */
+export type PathArt = 'cyber' | 'cloud' | 'software';
+
 export interface Pathway {
   id: PathwayId;
   name: string;
   shortName: string;
+  /** The custom artwork for this pathway, drawn inline in src/components/pathArt.ts. */
+  art: PathArt;
   summary: string;
+  tuition: Tuition;
   moduleDescriptionStatus: string;
   salaryRange: SalaryRange;
   modules: CourseModule[];
@@ -46,25 +58,27 @@ export interface CoursesConfig {
   creditEquivalents: number;
   fees: {
     vat: { statusConfirmed: boolean; placeholder: string };
-    monthly: { amount: number; months: number; total: number };
-    registration: { amount: number; onceOff: boolean };
-    standardTotal: number;
-    upfront: { amount: number; payBefore: string };
+    /** Tuition is priced per pathway; these are the shared rules. */
+    months: number;
+    examFeesCovered: boolean;
+    examFeesCoveredLine: string;
+    registration: { statusConfirmed: boolean; placeholder: string };
+    upfront: { statusConfirmed: boolean; placeholder: string };
     earlyBird: {
-      amount: number;
       seats: number;
       closesLabel: string;
       closesAt: string;
+      amountConfirmed: boolean;
+      placeholder: string;
       displayLine: string;
-      amountBasis: string;
-      amountBasisConfirmed: boolean;
     };
-    sponsorSeat: { amount: number; perLearner: boolean };
+    sponsorSeat: { statusConfirmed: boolean; placeholder: string };
   };
   core: { title: string; subtitle: string; modules: CourseModule[] };
   pathways: Pathway[];
   paymentOptions: PaymentOptionConfig[];
-  sponsor: { amount: number; enquiryHref: string; note: string };
+  paymentMethodsNote: string;
+  sponsor: { enquiryHref: string; note: string };
 }
 
 export const courses = raw as unknown as CoursesConfig;
@@ -77,6 +91,11 @@ export function getPathway(id: string): Pathway | undefined {
 
 export function isPathwayId(value: unknown): value is PathwayId {
   return typeof value === 'string' && (PATHWAY_IDS as readonly string[]).includes(value);
+}
+
+/** The tuition line every page quotes for a pathway. */
+export function tuitionLine(pathway: Pathway): string {
+  return `${formatRand(pathway.tuition.monthly)} a month for ${pathway.tuition.months} months (${formatRand(pathway.tuition.total)} in total)`;
 }
 
 /** Deterministic thousands grouping, so prices never reformat oddly by locale. */

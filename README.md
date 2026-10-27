@@ -31,9 +31,10 @@ a reference-number status lookup, and a staff admin area.
 **Not done, and deliberately so** — every one needs something from the school
 (see [§14](#14-what-i-need-from-you)):
 
-- The Knock adapter is **written but not switched on**: no key is set, so the
-  module still uses the **development adapter** that logs instead of sending.
-  Wiring it up takes two values and a dashboard template (§13.6).
+- The Knock adapter is **written but not switched on**: no key is set in
+  Cloudflare, so the module still uses the **development adapter** that logs
+  instead of sending. The dashboard side is done and tested (§13.6); only the
+  two environment values are missing.
 - Turnstile is **not enabled**: no site key or secret yet. The code path is
   written and fails closed in production.
 - No Supabase project, no Cloudflare project, no domain. Local development
@@ -504,7 +505,50 @@ Notes on how this was achieved, and one honest caveat:
 
 ## 13. Deployment
 
-Nothing below has been executed: it needs your Cloudflare and Supabase accounts.
+### Current status (15 Oct 2026)
+
+| Step | Status |
+| --- | --- |
+| Cloudflare Pages project `it-career-foundation` | **Created**, production branch `main` |
+| Preview deployment | **Live**: <https://preview.it-career-foundation.pages.dev> |
+| KV rate-limit namespaces | **Created** — ids committed in [`wrangler.toml`](wrangler.toml) |
+| Supabase project `it-career-foundation` | **Created** — ref `lfjinhmnjgwnruqznnlo`, Frankfurt (eu-central-1) |
+| Migrations 0001–0004 | **Applied** — 7 tables, RLS on all, private `application-documents` bucket |
+| Secrets (Supabase URL, service key, encryption key) | **Set** for both `preview` and `production` |
+| First staff/admin account | **Created** (Supabase Auth + `staff_users` row, role `admin`) |
+| RLS proofs | **20/20 pass against the live database** (they skip when unset) |
+| Turnstile | **Not done** — needs a site key from you, see [§14](#14-what-i-need-from-you) |
+| Real email delivery (Knock → Postmark) | **Live and delivering** — see [§13.6](#136-email-delivery-knock--postmark) |
+| GitHub repository | **Not done** — `.gitignore`, `.env.example`, `.github/` still untracked |
+| Production deployment | **Held deliberately** — §9 requires staging first |
+
+Verified end to end against the live preview, not just built:
+
+- The confirmation email **actually leaves the system**: `POST /api/applications`
+  → Knock → Postmark → **`ErrorCode: 0, Message: OK`**, Knock message status
+  **`delivered`**. §13.6 covers the Postmark approval limit that still applies.
+- All ten routes return `200 text/html` with the full security header set
+  (CSP, HSTS, X-Frame-Options, Referrer-Policy, X-Content-Type-Options).
+- A real multipart `POST /api/applications` returns **201** with reference
+  `IT-2027-000003`, rate-limit remaining **4/5**, and produced the row, two
+  storage objects, three audit events and an `outbound_emails` row marked
+  `sent`.
+- `/admin/` signs in with the staff account, lists the application, opens the
+  detail (documents, consent, audit trail, confirmation email), changes the
+  status, and writes an internal note — each change visible in the database
+  with the staff user recorded as the actor.
+- `POST /api/status` returns `200` for the right reference + email, **404** for
+  a wrong email, and **403** for a foreign `Origin`.
+- `tsc --noEmit` **0**, `vitest` **166 passed**, `vite build` **0**.
+
+Deploy a new preview build:
+
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name=it-career-foundation --branch=preview
+```
+
+Everything below is the remaining setup.
 
 ### 13.1 GitHub
 
@@ -528,24 +572,43 @@ any secrets, because the unit and smoke tests are credential-free.
 
 ### 13.2 Supabase
 
-1. Create a project at <https://supabase.com/dashboard>. Choose the region
-   closest to South Africa (Mumbai or Frankfurt are the usual picks).
-2. Apply the migrations **from this repository**, not by hand:
+**Done.** Project `it-career-foundation`, ref `lfjinhmnjgwnruqznnlo`, region
+Frankfurt. Link and push migrations with:
 
-   ```bash
-   npx supabase link --project-ref <your-project-ref>
-   npx supabase db push
-   ```
+```bash
+npx supabase link --project-ref lfjinhmnjgwnruqznnlo
+npx supabase db push
+```
 
-3. Confirm in **Database → Tables** that all seven tables exist and that RLS is
-   shown as enabled on each, and in **Storage** that `application-documents`
-   exists and is **not** public.
-4. Create the first staff account: **Authentication → Users → Add user**, then
-   run the `staff_users` insert from §9 in the SQL editor.
-5. Collect **Settings → API**: the project URL, the `anon` key and the
-   `service_role` key.
+> **Note on this machine:** `db push` failed here with a TLS `i/o timeout` on
+> port 5432 (the TCP connect succeeds, the handshake does not — a network
+> restriction, not a project problem). The migrations were applied instead
+> through the HTTPS Management API
+> (`POST /v1/projects/<ref>/database/query`), which is equivalent for plain DDL
+> but does **not** record them in `supabase_migrations.schema_migrations`. Run
+> `npx supabase db push` once from an unrestricted network; it will re-apply
+> the same idempotent statements and write the history rows.
 
-`service_role` bypasses RLS. It belongs in Cloudflare only.
+Migrations 0001–0004 are applied:
+
+| File | What it does |
+| --- | --- |
+| `0001_schema.sql` | 7 tables, reference sequence, encryption helper, audit triggers |
+| `0002_rls.sql` | RLS on every table; staff read, staff status update, `is_staff()` / `is_admin()` |
+| `0003_storage.sql` | Private `application-documents` bucket + staff-read policy |
+| `0004_staff_notes.sql` | Lets a signed-in staff member append **their own** `note_added` event, and stamps `actor_label` from `auth.users` |
+
+Confirmed in the live project: all seven tables have `rowsecurity = true`,
+eleven policies exist in `public` after 0004 (ten before it), plus the storage
+policy on `storage.objects`, and the bucket is `public = false`.
+
+**Staff account:** `staff_users` holds one row, role `admin`, backed by a real
+Supabase Auth user, so `/admin/` sign-in works with a password. Add more the
+same way — an Auth user **plus** a `staff_users` row; the row is what makes the
+account staff, because `staff_users_self_select` only lets a user read their own
+row.
+
+`service_role` bypasses RLS. It belongs in Cloudflare only, never in the bundle.
 
 ### 13.3 Cloudflare KV (rate limiting)
 
@@ -602,6 +665,24 @@ npx wrangler pages secret put TURNSTILE_SECRET --project-name it-career-foundati
 npx wrangler pages secret put KNOCK_SECRET_KEY --project-name it-career-foundation
 ```
 
+> **Gotcha that cost an hour:** `wrangler pages secret put` writes only to the
+> **production** environment and has no `--env` flag (checked in wrangler 3 and
+> 4). A `--branch=preview` deployment therefore runs **without** those secrets
+> and answers every `POST /api/applications` with a 503. Preview needs its own
+> copy, set through the Pages API:
+>
+> ```
+> PATCH /accounts/<account_id>/pages/projects/it-career-foundation
+> {"deployment_configs":{"preview":{"env_vars":{...},"wrangler_config_hash":"<from GET>"}}}
+> ```
+>
+> This was done for `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and
+> `FIELD_ENCRYPTION_KEY`; re-run it whenever they rotate, and set
+> `TURNSTILE_SECRET` in **both** environments when Turnstile is added.
+>
+> Env var changes only take effect on the **next** deployment, so redeploy
+> after changing them.
+
 ### 13.5 Turnstile
 
 Dashboard → Turnstile → Add widget. Add the hostname, then:
@@ -628,10 +709,91 @@ Before you start, two limits worth knowing:
   ([pricing](https://postmarkapp.com/pricing)). An intake above that needs a paid
   Postmark tier.
 - The confirmation wording stays in this repo and is unit tested. It is passed
-  to Knock as trigger data, so the Knock template must render `data.subject`,
-  `data.body_html` and `data.body_text` rather than hard-coding its own copy —
-  otherwise the email an applicant receives drifts away from the wording the
-  brief pins down.
+  to Knock as trigger data, and the Knock template renders `data.subject` and
+  `data.body_html` rather than hard-coding its own copy — otherwise the email an
+  applicant receives drifts away from the wording the brief pins down.
+- Knock **derives the plaintext part automatically** from the rendered HTML, so
+  the template does not need to reference `data.body_text` (the Worker still
+  sends it, and `outbound_emails` still stores it). Verified against the
+  delivered message, not assumed.
+
+**Status: live and delivering from the Worker (15 Oct 2026).**
+
+Verified on the deployed preview, end to end:
+
+| Evidence | Value |
+| --- | --- |
+| Submit → Knock trigger | `HTTP 200`, `workflow_run_id` returned and stored on `outbound_emails` |
+| Postmark response | `ErrorCode: 0, Message: OK, MessageID: 2f771db6-…` |
+| Knock message status | **`delivered`** |
+| Sender | `"IT Career Foundation School" <st10448252@myemeris.edu.za>` |
+| Subject rendered from the repo | `We have received your application - IT-2027-000016` |
+| `outbound_emails.provider` | `knock` (was `dev` — see the note below) |
+
+**A trap worth knowing:** the Worker had been silently on `EMAIL_PROVIDER=dev`
+for the whole project, because `wrangler.toml [vars]` ships `EMAIL_PROVIDER =
+"dev"` and `wrangler pages deploy` **replaces** that environment's plain-text
+vars with exactly the keys in `[vars]`. Setting the provider in the dashboard
+is therefore reverted on the next deploy — and the `dev` adapter reports
+`emailDelivered: true`, so nothing looks wrong. `EMAIL_PROVIDER` and
+`KNOCK_WORKFLOW_KEY` are now in `wrangler.toml [vars]` with the correct values.
+
+Related gotchas, both discovered the hard way:
+
+- Deploy **replaces plain vars**; only *secrets* survive a deploy. `ENVIRONMENT`
+  differs per environment, so it is stored as a secret in the dashboard — not
+  because the value is sensitive, but so a deploy cannot overwrite it or force
+  `ENVIRONMENT=development` onto Production (which would silently disable the
+  fail-closed Turnstile check).
+- The Pages API **redacts secret values on GET** (returns `""`). Any script that
+  reads env vars and writes them back will silently blank every secret. Always
+  build a PATCH from local values and refuse to round-trip a secret you did not
+  supply.
+
+**The one remaining constraint, which is not a code problem:** the Postmark
+account is *pending approval*, so Postmark enforces ErrorCode **412** — every
+recipient must share the domain of the sender. Until the account is approved or
+`myemeris.edu.za` is verified as a sender signature, a confirmation email is
+**delivered** only to `@myemeris.edu.za` addresses; any other domain is rejected
+with a 422 and Knock marks the message `undelivered`. Verified both ways:
+same-domain → `delivered`; `@vcconnect.edu.za` → `undelivered`, ErrorCode 412.
+See "Still outstanding" below.
+
+> Because Knock's trigger is asynchronous, a 2xx only means Knock accepted the
+> run. `outbound_emails.status = 'sent'` records that acceptance. The true
+> delivery state lives in Knock
+> (`GET /v1/messages?workflow_run_id=<id>` → `status`), and the run id stored on
+> the row is the handle for looking it up. A scheduled reconciliation of those
+> rows is a possible follow-up; it is not implemented.
+
+| Thing | Value |
+| --- | --- |
+| Postmark server | `My First Server` (id `21114783`), stream `outbound` |
+| Postmark sender | `st10448252@myemeris.edu.za` — confirmed, sends accepted |
+| Knock channel | key `postmark`, id `1ba4e2f9-7d0b-4a3e-bd13-0df70a71b43a`, Production configured |
+| Knock workflow | key `application-received` → set this as `KNOCK_WORKFLOW_KEY` |
+| Knock variables | `vars.app_name` = `IT Career Foundation School`; `vars.app_url` = `[domain: TO BE CONFIRMED]` |
+| Test sends | 3 accepted, subject and body rendered correctly in both parts |
+
+Still outstanding, in order of importance:
+
+0. **The Postmark account is pending approval, so it can only send to its own
+   sender domain.** ErrorCode 412: recipients must share the `From` domain until
+   approval completes. That means real applicants — who are not on
+   `myemeris.edu.za` — **will not receive their confirmation yet**. Finish the
+   Postmark account approval / sender-signature verification; no code change is
+   needed afterwards. This is the single thing blocking real-world delivery.
+1. **DKIM and Return-Path are `Not Verified` for `myemeris.edu.za`.** Postmark
+   shows this on Sender Signatures. Until the DNS records are added, deliver-
+   ability into Gmail/Outlook is at risk, and Postmark keeps the account on a
+   lower sending allowance. This also needs a decision: does the school control
+   that domain's DNS?
+2. **"Powered by Knock" is in every email footer** and cannot be removed on the
+   free plan (`Upgrade your plan to remove Knock branding`). Either accept it or
+   move the footer into the layout and upgrade.
+3. **`vars.app_url` is a visible placeholder**, deliberately not a real URL, so
+   nothing shipped points at a dead link. Replace it once the domain exists —
+   one variable, no code change.
 
 **Postmark**
 
@@ -656,9 +818,10 @@ Before you start, two limits worth knowing:
 3. `Channels and sources → Add channel → Postmark` → paste the Postmark **Server
    API token** and the From address → attach it to the environment whose key you
    just created ([Postmark setup](https://docs.knock.app/integrations/email/postmark)).
-4. Create a workflow with one **email step** and a template that renders
-   `data.subject`, `data.body_html` and `data.body_text`. Copy its key into
-   `KNOCK_WORKFLOW_KEY`.
+4. Create a workflow with one **email step**. This one is already built:
+   key `application-received`, trigger type *API call*, one Postmark step whose
+   subject is `{{ data.subject }}` and whose HTML body is
+   `{{ data.body_html }}`. Copy the key into `KNOCK_WORKFLOW_KEY`.
 
 **Wire it up**
 
@@ -666,8 +829,8 @@ Before you start, two limits worth knowing:
 npx wrangler pages secret put KNOCK_SECRET_KEY --project-name it-career-foundation
 ```
 
-Then set `EMAIL_PROVIDER=knock` and `KNOCK_WORKFLOW_KEY` as plain environment
-variables and redeploy. Until both are present the site keeps using the
+Then set `EMAIL_PROVIDER=knock` and `KNOCK_WORKFLOW_KEY=application-received`
+as plain environment variables and redeploy. Until both are present the site keeps using the
 development adapter. A missing `KNOCK_SECRET_KEY` does **not** fail the
 applicant's submission: the send is retried three times, then recorded as failed
 in `outbound_emails` for an admin to see, and the application is still saved.
@@ -733,9 +896,10 @@ here is silently guessed.
    disclaimer, or leave them unpublished.
 4. **Retention period.** The default is 5 years for rejected applications. Keep
    or change it.
-5. **Email provider.** ✅ Chosen: Knock over Postmark. The adapter is written
-   (§13.6); what is left is the Postmark sender-signature confirmation, the two
-   keys, and the Knock template.
+5. **Email provider.** ✅ Done: Knock over Postmark. The channel, the workflow
+   and the template are built and the chain has been test-sent (§13.6). What is
+   left is putting `KNOCK_SECRET_KEY` into Cloudflare, setting `EMAIL_PROVIDER`,
+   and verifying DKIM for the sending domain.
 
 **Values I must be given**
 6. School name, logo, contact email, phone number and street address

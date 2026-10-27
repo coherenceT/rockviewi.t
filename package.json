@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:pages": "wrangler pages dev dist --kv RATE_LIMIT --persist-to .wrangler/state",
+    "dev:worker": "npm run build && wrangler dev --config wrangler.toml --assets dist",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run test",
@@ -18,8 +18,8 @@
     "test:e2e": "playwright test tests/e2e/smoke.spec.ts",
     "test:e2e:all": "playwright test",
     "vitals": "node scripts/vitals.mjs",
-    "cf:preview": "npm run build && wrangler pages deploy dist --project-name it-career-foundation --branch preview",
-    "cf:deploy": "npm run build && wrangler pages deploy dist --project-name it-career-foundation --branch main"
+    "cf:preview": "npm run build && wrangler deploy --config wrangler.toml",
+    "cf:deploy": "npm run build && wrangler deploy --config wrangler.toml"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

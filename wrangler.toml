@@ -1,18 +1,19 @@
-# Cloudflare Pages project configuration.
-# Used by `wrangler pages dev` locally and `wrangler pages deploy`.
-# Secrets (SUPABASE_SERVICE_ROLE_KEY, TURNSTILE_SECRET, FIELD_ENCRYPTION_KEY)
-# are NOT here - set them with `wrangler pages secret put` or the dashboard.
-
+# Freebuff Sites static asset Worker configuration. Pages-specific KV settings
+# are intentionally omitted; Freebuff Sites does not provide KV namespaces.
 name = "it-career-foundation"
-pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
-
-# Rate-limit counter store (5 submissions per IP per hour, see RATE_LIMIT_MAX).
-[[kv_namespaces]]
-binding = "RATE_LIMIT"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_KV_PREVIEW_NAMESPACE_ID"
+compatibility_flags = ["nodejs_compat"]
 
 [vars]
-ENVIRONMENT = "development"
-EMAIL_PROVIDER = "dev"
+# NOTE: ENVIRONMENT is deliberately NOT here. It differs per environment
+# (preview vs production) and must be set per-environment in the dashboard;
+# `wrangler pages deploy` pushes [vars] over it, which would force
+# ENVIRONMENT=development onto Production and make the Worker treat
+# production as development - silently disabling the fail-closed Turnstile
+# check. EMAIL_PROVIDER is the same for both environments, so it stays.
+EMAIL_PROVIDER = "knock"
+# Knock workflow that renders and sends the confirmation email. Not a secret
+# (the secret key is KNOCK_SECRET_KEY, dashboard-only). It MUST be listed here:
+# `wrangler pages deploy` replaces this environment's plain vars with exactly
+# the keys below, so a value set only in the dashboard is dropped on deploy.
+KNOCK_WORKFLOW_KEY = "application-received"

@@ -1,7 +1,8 @@
-import { courses, fees, formatRand } from '../../shared/courses';
+import { courses, fees, formatRand, type Pathway } from '../../shared/courses';
 import { api } from '../../shared/config';
 import { h, render } from '../lib/dom';
 import { startCountdown } from './countdown';
+import { pathArt } from './pathArt';
 
 interface EarlyBirdResponse {
   seats: number;
@@ -11,19 +12,17 @@ interface EarlyBirdResponse {
 }
 
 /**
- * Fees are rendered from courses.json, so a price change never touches layout.
- * The VAT note is only stated as fact once the school has confirmed the
- * treatment; until then the placeholder comes through unchanged.
+ * Fees come from courses.json, so a price change never touches layout.
+ *
+ * Tuition is priced per pathway, and certification exam fees are covered by the
+ * school, so there is no exam-fee line anywhere. The other fee items are only
+ * named once the school has confirmed them; until then the placeholder in
+ * courses.json comes through unchanged.
  */
 
-function row(label: string, value: string, note?: string) {
-  return h(
-    'tr',
-    {},
-    h('th', { attrs: { scope: 'row' }, text: label }),
-    h('td', { class: 'num' }, h('strong', { text: value })),
-    h('td', { text: note ?? '' }),
-  );
+/** The one sentence every page uses about exam fees. */
+export function examFeesCoveredLine(): string {
+  return fees.examFeesCoveredLine;
 }
 
 export function renderFeesTable(selector: string): void {
@@ -37,41 +36,134 @@ export function renderFeesTable(selector: string): void {
       h(
         'table',
         {},
-        h('caption', { text: 'Fees for the 2027 intake' }),
+        h('caption', { text: `Tuition for the ${courses.intakeYear} intake, per pathway` }),
         h(
           'thead',
           {},
           h(
             'tr',
             {},
-            h('th', { attrs: { scope: 'col' }, text: 'Item' }),
-            h('th', { attrs: { scope: 'col' }, text: 'Amount' }),
-            h('th', { attrs: { scope: 'col' }, text: 'Notes' }),
+            h('th', { attrs: { scope: 'col' }, text: 'Pathway' }),
+            h('th', { attrs: { scope: 'col' }, text: 'Tuition per month' }),
+            h('th', { attrs: { scope: 'col' }, text: `Total tuition (${fees.months} months)` }),
           ),
         ),
         h(
           'tbody',
           {},
-          row('Monthly', `${formatRand(fees.monthly.amount)} × ${fees.monthly.months} months`, `Total ${formatRand(fees.monthly.total)}`),
-          row('Registration', formatRand(fees.registration.amount), 'Once-off'),
-          row('Total, standard', formatRand(fees.standardTotal), `Monthly plan plus registration`),
-          row(
-            'Pay upfront',
-            formatRand(fees.upfront.amount),
-            `In full, paid before ${new Date(`${fees.upfront.payBefore}T00:00:00Z`).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+          ...courses.pathways.map((pathway) =>
+            h(
+              'tr',
+              {},
+              h(
+                'th',
+                { attrs: { scope: 'row' } },
+                h(
+                  'span',
+                  { class: 'table-path' },
+                  pathArt(pathway.art, `${pathway.name} illustration`, 'sm'),
+                  h('span', { class: 'table-path__text', text: pathway.name }),
+                ),
+              ),
+              h(
+                'td',
+                { class: 'num', attrs: { 'data-label': 'Per month' } },
+                h('strong', { text: formatRand(pathway.tuition.monthly) }),
+              ),
+              h(
+                'td',
+                { class: 'num total', attrs: { 'data-label': '10 months' } },
+                h('strong', { text: formatRand(pathway.tuition.total) }),
+              ),
+            ),
           ),
-          row(
-            'Early bird',
-            formatRand(fees.earlyBird.amount),
-            `First ${fees.earlyBird.seats} paid learners only, closes ${fees.earlyBird.closesLabel}`,
-          ),
-          row('Sponsor a seat', formatRand(fees.sponsorSeat.amount), 'Per learner. Enquiry only, no payment on this site.'),
         ),
       ),
     ),
-    vatNote
-      ? h('p', { class: 'mt-4' }, h('span', { class: 'placeholder-tag', text: vatNote }))
-      : null,
+    h(
+      'p',
+      { class: 'fees-covered' },
+      h('span', { class: 'fees-covered__tick', attrs: { 'aria-hidden': 'true' }, text: '✓' }),
+      h('span', { text: fees.examFeesCoveredLine }),
+    ),
+    vatNote ? h('p', { class: 'mt-4' }, h('span', { class: 'placeholder-tag', text: vatNote })) : null,
+  );
+}
+
+/** Pick a pathway, see its tuition — monthly, ten months, and the covered line. */
+export function renderFeeCalculator(selector: string): void {
+  const output = h('div', { class: 'calc__out', attrs: { 'aria-live': 'polite' } });
+  const choices = h('fieldset', {
+    class: 'calc__choices',
+    attrs: { 'aria-label': 'Choose a pathway' },
+  });
+
+  const write = (pathway: Pathway): void => {
+    render(
+      output,
+      h(
+        'div',
+        { class: 'calc__row' },
+        h('span', { text: 'Monthly tuition' }),
+        h('b', { text: formatRand(pathway.tuition.monthly) }),
+      ),
+      h(
+        'div',
+        { class: 'calc__row' },
+        h('span', { text: `Tuition × ${pathway.tuition.months} months` }),
+        h('b', { text: formatRand(pathway.tuition.total) }),
+      ),
+      h(
+        'p',
+        { class: 'calc__included' },
+        h('span', { class: 'calc__tick', attrs: { 'aria-hidden': 'true' }, text: '✓' }),
+        h('span', { text: 'Exam fees included' }),
+      ),
+    );
+  };
+
+  courses.pathways.forEach((pathway, index) => {
+    const input = h('input', {
+      attrs: { type: 'radio', name: 'fee-pathway', value: pathway.id, checked: index === 0 },
+    });
+
+    input.addEventListener('change', () => {
+      if (input.checked) write(pathway);
+    });
+
+    choices.appendChild(
+      h(
+        'label',
+        { class: 'calc__choice' },
+        input,
+        h('span', { class: 'calc__radio', attrs: { 'aria-hidden': 'true' } }),
+        pathArt(pathway.art, `${pathway.name} illustration`, 'sm'),
+        h('span', { class: 'calc__choice-label', text: pathway.shortName }),
+        h('span', { class: 'calc__choice-price', text: `${formatRand(pathway.tuition.monthly)} /m` }),
+      ),
+    );
+  });
+
+  const first = courses.pathways[0];
+  if (first) write(first);
+
+  render(
+    selector,
+    h(
+      'div',
+      { class: 'calc' },
+      h(
+        'div',
+        { class: 'calc__head' },
+        h('h3', { text: 'Fee calculator' }),
+        h('span', { text: `Pick a pathway · ${fees.months} months` }),
+      ),
+      h('div', { class: 'calc__body' }, choices, output),
+      h('p', {
+        class: 'calc__hint',
+        text: `Tuition only. ${fees.examFeesCoveredLine} Nothing is charged on this website.`,
+      }),
+    ),
   );
 }
 
@@ -106,7 +198,7 @@ export function renderEarlyBirdPanel(selector: string): void {
   render(selector, panel);
 
   const handle = startCountdown(fees.earlyBird.closesAt, countdownHost, () => {
-    remainingLine.textContent = 'The early-bird offer has closed. The standard fee now applies.';
+    remainingLine.textContent = 'The early-bird offer has closed. The standard tuition for your pathway applies.';
   });
 
   // Places remaining come from the counter the school maintains, read through
@@ -118,14 +210,14 @@ export function renderEarlyBirdPanel(selector: string): void {
       const data = (await response.json()) as EarlyBirdResponse;
 
       if (data.paidCount === null) {
-        remainingLine.textContent = `We could not load the live counter just now. The early-bird fee applies to the first ${data.seats} paid learners.`;
+        remainingLine.textContent = `We could not load the live counter just now. The early-bird offer applies to the first ${data.seats} paid learners.`;
       } else if (!data.isOpen) {
-        remainingLine.textContent = `All ${data.seats} early-bird places have been taken, or the offer has closed. The standard fee applies.`;
+        remainingLine.textContent = `All ${data.seats} early-bird places have been taken, or the offer has closed.`;
       } else {
         remainingLine.textContent = `${data.remaining} of ${data.seats} early-bird places left.`;
       }
     } catch {
-      remainingLine.textContent = `We could not load the live counter just now. The early-bird fee applies to the first ${fees.earlyBird.seats} paid learners.`;
+      remainingLine.textContent = `We could not load the live counter just now. The early-bird offer applies to the first ${fees.earlyBird.seats} paid learners.`;
     } finally {
       window.addEventListener('pagehide', () => handle.stop(), { once: true });
     }
@@ -135,32 +227,22 @@ export function renderEarlyBirdPanel(selector: string): void {
 export function renderPaymentOptions(selector: string): void {
   render(
     selector,
-    h('h3', { class: 'mt-6', text: 'Payment options' }),
+    h('h3', { class: 'payment-heading', text: 'Ways to pay' }),
     h(
       'div',
-      { class: 'grid grid--2 mt-4' },
+      { class: 'payment-list' },
       ...courses.paymentOptions.map((option) =>
         h(
           'div',
-          { class: 'card' },
-          h('p', { class: 'card__meta', text: option.id.replace(/_/g, ' ') }),
-          h('h3', { text: option.label }),
-          h('p', { text: option.detail }),
-        ),
-      ),
-      h(
-        'div',
-        { class: 'card' },
-        h('p', { class: 'card__meta', text: 'sponsor enquiry' }),
-        h('h3', { text: 'Sponsor a seat' }),
-        h('p', { text: `${formatRand(courses.sponsor.amount)} per learner.` }),
-        h('p', { text: courses.sponsor.note }),
-        h(
-          'p',
-          { class: 'card__foot' },
-          h('a', { class: 'btn btn--secondary', attrs: { href: courses.sponsor.enquiryHref }, text: 'Send an enquiry' }),
+          { class: `payment-row${option.id === 'sponsored' ? ' payment-row--sponsor' : ''}` },
+          h('h4', { text: option.label }),
+          h('p', { class: 'payment-row__detail', text: option.detail }),
+          option.id === 'sponsored'
+            ? h('a', { class: 'text-link', attrs: { href: courses.sponsor.enquiryHref }, text: 'Send an enquiry' })
+            : null,
         ),
       ),
     ),
+    h('p', { class: 'payment-row__detail mt-4', text: courses.paymentMethodsNote }),
   );
 }

@@ -8,32 +8,28 @@
       "statusConfirmed": false,
       "placeholder": "[VAT treatment: TO BE CONFIRMED]"
     },
-    "monthly": {
-      "amount": 6500,
-      "months": 10,
-      "total": 65000
-    },
+    "months": 10,
+    "examFeesCovered": true,
+    "examFeesCoveredLine": "Your certification exam fees are covered by the school.",
     "registration": {
-      "amount": 3000,
-      "onceOff": true
+      "statusConfirmed": false,
+      "placeholder": "[Registration fee: TO BE CONFIRMED]"
     },
-    "standardTotal": 68000,
     "upfront": {
-      "amount": 64000,
-      "payBefore": "2027-01-31"
+      "statusConfirmed": false,
+      "placeholder": "[Upfront payment terms: TO BE CONFIRMED]"
     },
     "earlyBird": {
-      "amount": 65000,
       "seats": 15,
       "closesLabel": "30 November 2026",
       "closesAt": "2026-12-01T00:00:00+02:00",
-      "displayLine": "Early bird: R65,000 total, first 15 paid learners only, closes 30 November 2026",
-      "amountBasis": "total",
-      "amountBasisConfirmed": false
+      "amountConfirmed": false,
+      "placeholder": "[Early-bird amount: TO BE CONFIRMED]",
+      "displayLine": "Early bird: first 15 paid learners only, closes 30 November 2026. [Early-bird amount: TO BE CONFIRMED]"
     },
     "sponsorSeat": {
-      "amount": 68000,
-      "perLearner": true
+      "statusConfirmed": false,
+      "placeholder": "[Sponsor amount: TO BE CONFIRMED]"
     }
   },
   "salaryRangesApprovedForDisplay": false,
@@ -70,7 +66,9 @@
       "id": "a",
       "name": "Software, Web and Mobile Development",
       "shortName": "Software Development",
+      "art": "software",
       "summary": "Build and ship software: web foundations, JavaScript, full-stack applications with databases, then a delivery capstone.",
+      "tuition": { "monthly": 3500, "months": 10, "total": 35000 },
       "moduleDescriptionStatus": "TO BE CONFIRMED",
       "salaryRange": { "min": 15000, "max": 25000, "period": "month" },
       "modules": [
@@ -100,7 +98,9 @@
       "id": "b",
       "name": "Cybersecurity and IT Support",
       "shortName": "Cybersecurity and IT Support",
+      "art": "cyber",
       "summary": "Support users and defend systems: operating systems and networking, security fundamentals, security operations and vulnerability management, then a SOC capstone.",
+      "tuition": { "monthly": 5000, "months": 10, "total": 50000 },
       "moduleDescriptionStatus": "TO BE CONFIRMED",
       "salaryRange": { "min": 12000, "max": 22000, "period": "month" },
       "modules": [
@@ -130,7 +130,9 @@
       "id": "c",
       "name": "Data, Networking and Cloud Operations",
       "shortName": "Data and Cloud Operations",
+      "art": "cloud",
       "summary": "Run the platforms: data literacy and SQL, networking and systems operations, cloud foundations with automation and security, then an operations capstone.",
+      "tuition": { "monthly": 4000, "months": 10, "total": 40000 },
       "moduleDescriptionStatus": "TO BE CONFIRMED",
       "salaryRange": { "min": 13000, "max": 24000, "period": "month" },
       "modules": [
@@ -158,13 +160,13 @@
     }
   ],
   "paymentOptions": [
-    { "id": "monthly", "label": "Monthly", "detail": "R6,500 per month for 10 months (R65,000 total)" },
-    { "id": "upfront", "label": "Upfront", "detail": "R64,000 in full, paid before 31 January 2027" },
-    { "id": "early_bird", "label": "Early bird", "detail": "R65,000 total, first 15 paid learners only, closes 30 November 2026" },
-    { "id": "sponsored", "label": "Sponsored", "detail": "A sponsor covers R68,000 per learner. This is an enquiry, not a payment." }
+    { "id": "monthly", "label": "Monthly", "detail": "Tuition is spread over 10 months by debit order or EFT." },
+    { "id": "upfront", "label": "Upfront", "detail": "The full tuition for your path, paid before the intake starts. [Upfront terms: TO BE CONFIRMED]" },
+    { "id": "early_bird", "label": "Early bird", "detail": "First 15 paid learners only, closes 30 November 2026. [Early-bird amount: TO BE CONFIRMED]" },
+    { "id": "sponsored", "label": "Sponsored", "detail": "A sponsor can cover a learner's tuition. This is an enquiry, not a payment." }
   ],
+  "paymentMethodsNote": "Debit order, EFT, deposit and registration fee: [terms to be confirmed].",
   "sponsor": {
-    "amount": 68000,
     "enquiryHref": "mailto:sponsors@example.invalid?subject=Sponsor%20a%20seat",
     "note": "Sponsoring a seat is an enquiry only. No payment is taken on this site."
   }

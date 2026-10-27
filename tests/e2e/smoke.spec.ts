@@ -11,18 +11,22 @@ import { programme } from '../../shared/config';
 const courses = JSON.parse(readFileSync(resolve(process.cwd(), 'shared/courses.json'), 'utf8')) as {
   currencySymbol: string;
   fees: {
-    monthly: { amount: number; months: number; total: number };
-    registration: { amount: number };
-    standardTotal: number;
-    upfront: { amount: number };
-    earlyBird: { amount: number; seats: number; closesLabel: string; displayLine: string };
-    sponsorSeat: { amount: number };
+    months: number;
+    examFeesCoveredLine: string;
+    earlyBird: { seats: number; closesLabel: string; displayLine: string };
   };
+  pathways: { id: string; tuition: { monthly: number; months: number; total: number } }[];
 };
 const fees = courses.fees;
 
 function formatRand(amount: number): string {
   return `${courses.currencySymbol}${String(Math.round(amount)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+}
+
+function pathwayTuition(id: string): { monthly: number; months: number; total: number } {
+  const pathway = courses.pathways.find((item) => item.id === id);
+  if (!pathway) throw new Error(`pathway ${id} is missing from courses.json`);
+  return pathway.tuition;
 }
 
 /**
@@ -49,10 +53,18 @@ test.describe('landing page', () => {
       await expect(links.first()).toBeVisible();
     }
 
-    // The fee table is generated from the single price config file.
-    await expect(page.locator('#fees-table tbody tr')).toHaveCount(6);
-    await expect(page.locator('#fees-table')).toContainText(formatRand(fees.standardTotal));
-    await expect(page.locator('#fees-table')).toContainText(formatRand(fees.monthly.amount));
+    // One row per pathway, priced from the single price config file.
+    await expect(page.locator('#fees-table tbody tr')).toHaveCount(3);
+    await expect(page.locator('#fees-table')).toContainText(formatRand(pathwayTuition('b').total));
+    await expect(page.locator('#fees-table')).toContainText(formatRand(pathwayTuition('a').monthly));
+    await expect(page.locator('#fees-table')).toContainText('certification exam fees are covered by the school');
+
+    // The fee calculator follows the pathway the visitor picks, and never shows
+    // a separate exam-fee line.
+    await expect(page.locator('#fee-calculator .calc__included')).toContainText('Exam fees included');
+    await page.locator('#fee-calculator input[value="b"]').check({ force: true });
+    await expect(page.locator('#fee-calculator')).toContainText(formatRand(pathwayTuition('b').monthly));
+    await expect(page.locator('#fee-calculator')).toContainText(formatRand(pathwayTuition('b').total));
 
     // The early-bird line is quoted exactly as published.
     await expect(page.locator('#early-bird-panel')).toContainText(fees.earlyBird.displayLine);
@@ -100,7 +112,10 @@ test.describe('course pages', () => {
       await expect(page.locator('#pathway-overview')).toContainText(`Pathway ${pathway.toUpperCase()}`);
       await expect(page.locator('#core-modules .card')).toHaveCount(4);
       await expect(page.locator('#pathway-modules .card')).toHaveCount(4);
-      await expect(page.locator('#fees-table tbody tr')).toHaveCount(6);
+
+      // One tuition row per pathway, and this pathway's total is on the page.
+      await expect(page.locator('#fees-table tbody tr')).toHaveCount(3);
+      await expect(page.locator('#fees-table')).toContainText(formatRand(pathwayTuition(pathway).total));
 
       // Salary ranges are not published until the school approves them.
       await expect(page.locator('#pathway-salary')).toBeEmpty();

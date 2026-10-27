@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="500" viewBox="0 0 1400 500" role="img" aria-labelledby="title desc">
+<title id="title">Rockview I.T. Connected Systems logo</title>
+<desc id="desc">A blue connected-node symbol enclosed in a silver rectangular outline, placed beside the Rockview I.T. logotype.</desc>
+<defs>
+ <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#111a26"/><stop offset="1" stop-color="#0c121b"/></linearGradient>
+ <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1d2b3a"/><stop offset="1" stop-color="#15202c"/></linearGradient>
+</defs>
+<rect width="1400" height="500" fill="url(#background)"/>
+<text x="86" y="76" fill="#82b7ef" font-family="DejaVu Sans,Arial,sans-serif" font-size="15" font-weight="700" letter-spacing="4">ROCKVIEW I.T. · CONNECTED SYSTEMS</text>
+<text x="86" y="112" fill="#aab5c2" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">Horizontal logo direction · blue, black, white and silver</text>
+<rect x="72" y="151" width="1256" height="278" rx="22" fill="url(#panel)" stroke="#ffffff" stroke-opacity=".12"/>
+<!-- Rectangular enclosure for the network mark -->
+<rect x="154" y="193" width="190" height="190" rx="18" fill="#111a26" stroke="#aeb8c4" stroke-width="5"/>
+<!-- Connected-node drawing -->
+<g fill="none" stroke="#2878d0" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M205 246 249 287 205 330M205 246 249 287 294 246M205 330 249 287 294 330M249 287V225M249 287H307"/>
+</g>
+<g fill="#f5f7fa" stroke="#2878d0" stroke-width="7">
+ <circle cx="205" cy="246" r="11"/><circle cx="205" cy="330" r="11"/>
+ <circle cx="249" cy="225" r="11"/><circle cx="294" cy="246" r="11"/>
+ <circle cx="294" cy="330" r="11"/><circle cx="307" cy="287" r="11"/>
+</g>
+<!-- Wordmark with a clear space between ROCKVIEW and I.T. -->
+<text x="405" y="303" fill="#f5f7fa" font-family="DejaVu Sans,Arial,sans-serif" font-size="76" font-weight="700" letter-spacing="-2">Rockview I.T.</text>
+<rect x="410" y="328" width="758" height="5" rx="2.5" fill="#2878d0"/>
+<text x="410" y="366" fill="#aeb8c4" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="600" letter-spacing="6">CONNECTED SYSTEMS · TRUSTED IT</text>
+<text x="86" y="467" fill="#8491a0" font-family="DejaVu Sans,Arial,sans-serif" font-size="13" letter-spacing="2">CONCEPT REVISION · RECTANGULAR NETWORK MARK + ROCKVIEW I.T. LOCKUP</text>
+</svg>

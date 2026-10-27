@@ -1,5 +1,6 @@
 import { legal, programme, routes, school } from '../../shared/config';
 import { h, render } from '../lib/dom';
+import { brandLockup, initBrandMark, initBrandScrollSpy } from './brand';
 
 /**
  * The header and footer are rendered from shared/config.ts.
@@ -9,8 +10,43 @@ import { h, render } from '../lib/dom';
  * name in one file" true rather than aspirational.
  */
 
-function navLink(href: string, label: string) {
-  return h('li', {}, h('a', { attrs: { href }, text: label }));
+/**
+ * The mobile menu is a <details> element, so it stays open after an in-page
+ * jump unless it is closed deliberately. Choosing a destination closes it, and
+ * so do a click outside the menu and the Escape key.
+ */
+function initNavToggle(): void {
+  const toggle = document.querySelector<HTMLDetailsElement>('.nav-toggle');
+  if (!toggle) return;
+
+  for (const link of Array.from(toggle.querySelectorAll('a'))) {
+    link.addEventListener('click', () => {
+      toggle.open = false;
+    });
+  }
+
+  document.addEventListener('click', (event) => {
+    if (!toggle.open) return;
+    if (event.target instanceof Node && !toggle.contains(event.target)) toggle.open = false;
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !toggle.open) return;
+    toggle.open = false;
+    toggle.querySelector('summary')?.focus();
+  });
+}
+
+function navLink(href: string, label: string, brandRef?: string) {
+  return h(
+    'li',
+    {},
+    h('a', {
+      attrs: { href },
+      dataset: brandRef ? { brandRef } : undefined,
+      text: label,
+    }),
+  );
 }
 
 export function renderHeader(): void {
@@ -22,12 +58,7 @@ export function renderHeader(): void {
       h(
         'div',
         { class: 'site-header__inner' },
-        h(
-          'a',
-          { class: 'brand', attrs: { href: routes.home, 'aria-label': `${school.name} home` } },
-          h('span', { class: 'brand__mark', attrs: { 'aria-hidden': 'true' }, text: 'IT' }),
-          h('span', { class: 'brand__name', text: school.name }),
-        ),
+        brandLockup(),
         h(
           'details',
           { class: 'nav-toggle' },
@@ -38,10 +69,12 @@ export function renderHeader(): void {
             h(
               'ul',
               { class: 'site-nav__list' },
-              navLink('/#pathways', 'Pathways'),
-              navLink('/#fees', 'Fees'),
+              navLink('/#overview', 'School', 'school'),
+              navLink('/#pathways', 'Pathways', 'pathways'),
+              navLink('/#certifications', 'Certifications'),
+              navLink('/#fees', 'Fees', 'fees'),
               navLink('/#faq', 'Questions'),
-              navLink(routes.status, 'Check status'),
+              navLink(routes.status, 'Status', 'status'),
             ),
           ),
         ),
@@ -51,10 +84,11 @@ export function renderHeader(): void {
           h(
             'ul',
             { class: 'site-nav__list' },
-            navLink('/#pathways', 'Pathways'),
-            navLink('/#fees', 'Fees'),
-            navLink('/#faq', 'Questions'),
-            navLink(routes.status, 'Check status'),
+          navLink('/#pathways', 'Pathways', 'pathways'),
+          navLink('/#certifications', 'Certifications'),
+          navLink('/#fees', 'Fees', 'fees'),
+          navLink('/#faq', 'Questions'),
+          navLink(routes.status, 'Check status', 'status'),
           ),
         ),
         h('a', { class: 'btn btn--primary header-cta', attrs: { href: routes.apply }, text: 'Apply now' }),
@@ -75,7 +109,7 @@ export function renderFooter(): void {
         h(
           'div',
           {},
-          h('h2', { text: school.name }),
+          h('h2', { text: 'Rockview I.T.' }),
           h('p', { text: school.tagline }),
           h('p', { text: school.location }),
         ),
@@ -98,8 +132,20 @@ export function renderFooter(): void {
           h(
             'ul',
             {},
-            h('li', {}, h('a', { attrs: { href: routes.apply }, text: 'Start an application' })),
-            h('li', {}, h('a', { attrs: { href: routes.status }, text: 'Check application status' })),
+            h(
+              'li',
+              {},
+              h('a', { attrs: { href: routes.apply }, dataset: { brandRef: 'apply' }, text: 'Start an application' }),
+            ),
+            h(
+              'li',
+              {},
+              h('a', {
+                attrs: { href: routes.status },
+                dataset: { brandRef: 'status' },
+                text: 'Check application status',
+              }),
+            ),
             h('li', {}, h('a', { attrs: { href: routes.privacy }, text: 'Privacy notice' })),
             h('li', {}, h('a', { attrs: { href: routes.terms }, text: 'Terms of enrolment' })),
           ),
@@ -107,7 +153,11 @@ export function renderFooter(): void {
       ),
       h(
         'div',
-        { class: 'site-footer__legal' },
+        {
+          class: 'site-footer__legal',
+          attrs: { id: 'contact', 'data-spot-chip': '06 · Contact' },
+          dataset: { brandSpot: 'contact' },
+        },
         h('p', { text: legal.accreditationPlaceholder }),
         h('p', {
           text: `${programme.deliveryMode} programme, ${programme.startLabel} to ${programme.endLabel}. Places are confirmed only after the admissions decision and payment steps.`,
@@ -121,4 +171,7 @@ export function renderFooter(): void {
 export function initLayout(): void {
   renderHeader();
   renderFooter();
+  initBrandMark();
+  initBrandScrollSpy();
+  initNavToggle();
 }

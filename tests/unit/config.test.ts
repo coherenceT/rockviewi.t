@@ -12,29 +12,48 @@ import { legal, programme, school } from '../../shared/config';
  */
 
 describe('fees match the brief exactly', () => {
-  it('monthly plan is R6,500 for 10 months, R65,000 in total', () => {
-    expect(courses.fees.monthly.amount).toBe(6500);
-    expect(courses.fees.monthly.months).toBe(10);
-    expect(courses.fees.monthly.total).toBe(65000);
+  it('prices each pathway per month over ten months', () => {
+    const tuition = Object.fromEntries(courses.pathways.map((pathway) => [pathway.id, pathway.tuition]));
+
+    expect(tuition.a).toEqual({ monthly: 3500, months: 10, total: 35000 });
+    expect(tuition.b).toEqual({ monthly: 5000, months: 10, total: 50000 });
+    expect(tuition.c).toEqual({ monthly: 4000, months: 10, total: 40000 });
+    expect(courses.fees.months).toBe(10);
+
+    for (const pathway of courses.pathways) {
+      expect(pathway.tuition.monthly * pathway.tuition.months).toBe(pathway.tuition.total);
+    }
   });
 
-  it('registration is a once-off R3,000', () => {
-    expect(courses.fees.registration.amount).toBe(3000);
-    expect(courses.fees.registration.onceOff).toBe(true);
+  it('covers the certification exam fees in the tuition', () => {
+    expect(courses.fees.examFeesCovered).toBe(true);
+    expect(courses.fees.examFeesCoveredLine).toBe('Your certification exam fees are covered by the school.');
+
+    // Nothing anywhere may present a separate or once-off exam fee.
+    const json = JSON.stringify(courses).toLowerCase();
+    expect(json).not.toContain('exam fee"');
+    expect(json).not.toContain('exam_fee');
+    expect(json).not.toContain('including exams');
   });
 
-  it('the standard total is R68,000', () => {
-    expect(courses.fees.standardTotal).toBe(68000);
-    expect(courses.fees.monthly.total + courses.fees.registration.amount).toBe(courses.fees.standardTotal);
+  it('leaves no old flat-fee figure anywhere in the config', () => {
+    const numbers: number[] = [];
+    const walk = (value: unknown): void => {
+      if (typeof value === 'number') numbers.push(value);
+      else if (Array.isArray(value)) value.forEach(walk);
+      else if (value && typeof value === 'object') Object.values(value).forEach(walk);
+    };
+    walk(courses);
+
+    for (const stale of [6500, 65000, 68000, 64000, 3000, 15500, 6600, 6400]) {
+      expect(numbers).not.toContain(stale);
+    }
+
+    // The three tuition totals are the only large amounts left.
+    expect(numbers.filter((amount) => amount >= 30000).sort((a, b) => a - b)).toEqual([35000, 40000, 50000]);
   });
 
-  it('upfront is R64,000 in full, paid before 31 January 2027', () => {
-    expect(courses.fees.upfront.amount).toBe(64000);
-    expect(courses.fees.upfront.payBefore).toBe('2027-01-31');
-  });
-
-  it('early bird is R65,000 for the first 15 paid learners, closing 30 November 2026', () => {
-    expect(courses.fees.earlyBird.amount).toBe(65000);
+  it('keeps the early-bird date and seats without an amount', () => {
     expect(courses.fees.earlyBird.seats).toBe(15);
     expect(courses.fees.earlyBird.closesLabel).toBe('30 November 2026');
 
@@ -42,28 +61,27 @@ describe('fees match the brief exactly', () => {
     // the countdown runs to the end of 30 November.
     const closes = new Date(courses.fees.earlyBird.closesAt);
     expect(closes.toISOString()).toBe('2026-11-30T22:00:00.000Z');
+
+    // The amount is unconfirmed, so the published line must not quote a price.
+    expect(courses.fees.earlyBird.amountConfirmed).toBe(false);
+    expect(courses.fees.earlyBird.displayLine).not.toMatch(/R\s?\d/);
   });
 
-  it('renders the early-bird line exactly as the brief specifies', () => {
-    expect(courses.fees.earlyBird.displayLine).toBe(
-      'Early bird: R65,000 total, first 15 paid learners only, closes 30 November 2026',
-    );
-  });
-
-  it('sponsoring a seat is R68,000 per learner, as an enquiry', () => {
-    expect(courses.fees.sponsorSeat.amount).toBe(68000);
-    expect(courses.sponsor.amount).toBe(68000);
+  it('sponsoring a seat stays an enquiry, with no published amount', () => {
     expect(courses.sponsor.enquiryHref.startsWith('mailto:')).toBe(true);
     expect(courses.sponsor.note).toMatch(/enquiry only/i);
     expect(courses.sponsor.note).toMatch(/no payment/i);
   });
 
   it('keeps the unconfirmed claims switched off', () => {
-    // VAT treatment, the early-bird basis and the salary ranges are all
-    // awaiting confirmation, so none of them may be presented as settled.
+    // VAT treatment, the registration and upfront terms, the sponsor amount and
+    // the salary ranges are all awaiting confirmation, so none of them may be
+    // presented as settled.
     expect(courses.fees.vat.statusConfirmed).toBe(false);
     expect(courses.fees.vat.placeholder).toBe('[VAT treatment: TO BE CONFIRMED]');
-    expect(courses.fees.earlyBird.amountBasisConfirmed).toBe(false);
+    expect(courses.fees.registration.statusConfirmed).toBe(false);
+    expect(courses.fees.upfront.statusConfirmed).toBe(false);
+    expect(courses.fees.sponsorSeat.statusConfirmed).toBe(false);
     expect(courses.salaryRangesApprovedForDisplay).toBe(false);
   });
 

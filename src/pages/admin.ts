@@ -3,7 +3,7 @@ import { initLayout } from '../components/layout';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { APPLICATION_STATUSES, PATHWAY_IDS, type ApplicationStatus, type PathwayId } from '../../shared/types';
 import { STATUS_LABELS } from '../../shared/status';
-import { fees, earlyBirdSeatsRemaining, formatRand, pathwayName } from '../../shared/courses';
+import { fees, earlyBirdSeatsRemaining, pathwayName } from '../../shared/courses';
 import { formatBytes, formatDateTime, h, qs, render, type Child } from '../lib/dom';
 
 /**
@@ -232,6 +232,11 @@ function renderShell(): void {
       h('div', { class: 'filters' }, statusSelect, pathwaySelect, search, apply),
       h('div', { attrs: { id: 'admin-list' } }),
       h('div', { class: 'btn-row mt-4' }, signOut),
+      // Lives outside #admin-detail on purpose: openDetail() re-renders that
+      // host, so a notice placed inside the detail card would be cleared the
+      // instant it was shown. This one survives, which is the whole point of
+      // telling someone their action failed.
+      h('div', { attrs: { id: 'admin-flash' } }),
       h('div', { class: 'mt-6', attrs: { id: 'admin-detail' } }),
     ),
   );
@@ -376,6 +381,8 @@ function detailRow(label: string, value: string | null | undefined) {
 async function openDetail(id: string, reference: string): Promise<void> {
   if (!client) return;
   const host = '#admin-detail';
+  // A message about the previous application must not outlive it.
+  render('#admin-flash');
   render(host, h('p', { class: 'muted', text: `Loading ${reference}…` }));
 
   const [application, documents, events, emails] = await Promise.all([
@@ -503,7 +510,6 @@ async function openDetail(id: string, reference: string): Promise<void> {
     );
   }
   const statusNote = h('textarea', { attrs: { id: 'detail-status-note', rows: 2, placeholder: 'Optional note for the audit trail' } });
-  const statusFeedback = h('div', { class: 'mt-4' });
   const saveStatus = h('button', {
     class: 'btn btn--primary',
     attrs: { type: 'button' },
@@ -511,7 +517,7 @@ async function openDetail(id: string, reference: string): Promise<void> {
   });
   saveStatus.addEventListener('click', async () => {
     saveStatus.disabled = true;
-    render(statusFeedback);
+    render('#admin-flash');
     const nextStatus = statusSelect.value as ApplicationStatus;
     const { error } = await client!
       .from('applications')
@@ -519,22 +525,40 @@ async function openDetail(id: string, reference: string): Promise<void> {
       .eq('id', id);
     saveStatus.disabled = false;
     if (error) {
-      render(statusFeedback, notice('danger', h('p', { text: 'The status could not be saved.' }), h('p', { class: 'muted', text: error.message })));
+      render(
+        '#admin-flash',
+        notice('danger', h('p', { text: 'The status could not be saved.' }), h('p', { class: 'muted', text: error.message })),
+      );
       return;
     }
     const note = statusNote.value.trim();
+    let noteSaved = true;
     if (note) {
-      await client!.from('application_events').insert({
+      const { error: noteError } = await client!.from('application_events').insert({
         application_id: id,
         event_type: 'note_added',
         note,
         actor_id: (await client!.auth.getUser()).data.user?.id ?? null,
       });
-      statusNote.value = '';
+      // A rejected note must not look like a saved one: the audit trail is the
+      // record of who decided what, so losing it silently is not acceptable.
+      if (noteError) noteSaved = false;
+      else statusNote.value = '';
     }
-    render(statusFeedback, notice('success', h('p', { text: `Status saved as ${STATUS_LABELS[nextStatus]}.` })));
+    const feedback = noteSaved
+      ? notice('success', h('p', { text: `Status saved as ${STATUS_LABELS[nextStatus]}.` }))
+      : notice(
+          'danger',
+          h('p', { text: `Status saved as ${STATUS_LABELS[nextStatus]}, but the note was not recorded.` }),
+          h('p', { class: 'muted', text: 'The note is still in the box above - press Save status again to retry it.' }),
+        );
     await refreshList();
-    void openDetail(id, reference);
+    // Only rebuild the card when there is nothing left for the user to retry;
+    // re-rendering would throw away the note they just typed. openDetail clears
+    // #admin-flash, so the notice is written after it - never before, or it
+    // would be erased the moment it appeared.
+    if (noteSaved) await openDetail(id, reference);
+    render('#admin-flash', feedback);
   });
 
   card.appendChild(
@@ -545,7 +569,7 @@ async function openDetail(id: string, reference: string): Promise<void> {
       h('div', { class: 'field' }, h('label', { attrs: { for: 'detail-status' }, text: 'New status' }), statusSelect),
       h('div', { class: 'field' }, h('label', { attrs: { for: 'detail-status-note' }, text: 'Internal note' }), statusNote),
       h('div', { class: 'btn-row' }, saveStatus),
-      statusFeedback,
+      // Feedback goes to #admin-flash (outside this card), never in here.
     ),
   );
 
@@ -599,7 +623,6 @@ async function openDetail(id: string, reference: string): Promise<void> {
   if (staff?.role === 'admin') {
     const reason = h('textarea', { attrs: { id: 'delete-reason', rows: 2, placeholder: 'Reason for the deletion request' } });
     const confirm = h('input', { attrs: { type: 'text', id: 'delete-confirm', placeholder: 'Type DELETE' } });
-    const feedback = h('div', { class: 'mt-4' });
     const deleteButton = h('button', {
       class: 'btn btn--danger',
       attrs: { type: 'button' },
@@ -607,7 +630,7 @@ async function openDetail(id: string, reference: string): Promise<void> {
     });
     deleteButton.addEventListener('click', async () => {
       deleteButton.disabled = true;
-      render(feedback);
+      render('#admin-flash');
       const response = await workerFetch(`/api/admin/applications/${id}/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -616,10 +639,12 @@ async function openDetail(id: string, reference: string): Promise<void> {
       deleteButton.disabled = false;
       if (!response.ok) {
         const payload = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
-        render(feedback, notice('danger', h('p', { text: payload.error?.message ?? 'The data could not be erased.' })));
+        render('#admin-flash', notice('danger', h('p', { text: payload.error?.message ?? 'The data could not be erased.' })));
         return;
       }
-      render(feedback, notice('success', h('p', { text: 'The applicant’s data has been erased and the deletion was logged.' })));
+      // #admin-detail is cleared on the next line, so this confirmation has to
+      // live outside it or the user would never see it.
+      render('#admin-flash', notice('success', h('p', { text: 'The applicant’s data has been erased and the deletion was logged.' })));
       render('#admin-detail');
       await refreshList();
     });
@@ -635,7 +660,6 @@ async function openDetail(id: string, reference: string): Promise<void> {
         h('div', { class: 'field' }, h('label', { attrs: { for: 'delete-reason' }, text: 'Reason' }), reason),
         h('div', { class: 'field' }, h('label', { attrs: { for: 'delete-confirm' }, text: 'Confirmation' }), confirm),
         h('div', { class: 'btn-row' }, deleteButton),
-        feedback,
       ),
     );
   }
@@ -696,7 +720,7 @@ async function renderEarlyBirdWidget(): Promise<void> {
       { class: 'card' },
       h('h3', { text: 'Early-bird places' }),
       h('p', {
-        text: `The early-bird fee applies to the first ${fees.earlyBird.seats} paid learners and closes ${fees.earlyBird.closesLabel}, at ${formatRand(fees.earlyBird.amount)}.`,
+        text: `The early-bird offer applies to the first ${fees.earlyBird.seats} paid learners and closes ${fees.earlyBird.closesLabel}. ${fees.earlyBird.placeholder}`,
       }),
       h('p', { text: `Currently ${paid} paid, so ${earlyBirdSeatsRemaining(paid)} places remain.` }),
       h('div', { class: 'field' }, h('label', { attrs: { for: 'early-bird-count' }, text: 'Paid learners' }), input),

@@ -1,5 +1,7 @@
-import { courses, getPathway, salaryRangeLine, type CourseModule } from '../../shared/courses';
+import { courses, formatRand, getPathway, salaryRangeLine, type CourseModule } from '../../shared/courses';
 import { h, render } from '../lib/dom';
+import { examFeesCoveredLine } from './fees';
+import { pathArt } from './pathArt';
 
 /**
  * Pathway and module content comes from courses.json.
@@ -17,10 +19,26 @@ export function pathwayCard(pathwayId: string) {
 
   return h(
     'article',
-    { class: 'card' },
+    { class: `card pathway-card pathway-card--${pathway.id}`, dataset: { pathway: pathway.id.toUpperCase() } },
+    // Photo slot: replace this gradient block with a real photo of a
+    // classroom/learners once the school supplies one. No hotlinked images.
+    h('div', { class: 'path-photo', attrs: { 'aria-hidden': 'true' } }),
     h('p', { class: 'card__meta', text: `Pathway ${pathway.id.toUpperCase()}` }),
+    pathArt(pathway.art, `${pathway.name} illustration`, 'lg'),
     h('h3', {}, h('a', { attrs: { href: `/courses/${pathway.id}` }, text: pathway.name })),
     h('p', { text: pathway.summary }),
+    h(
+      'p',
+      { class: 'pathway-card__tuition' },
+      h('b', { text: formatRand(pathway.tuition.monthly) }),
+      h('span', { text: ` a month · ${formatRand(pathway.tuition.total)} over ${pathway.tuition.months} months` }),
+    ),
+    h(
+      'p',
+      { class: 'pathway-card__cover' },
+      h('span', { class: 'pathway-card__cover-tick', attrs: { 'aria-hidden': 'true' }, text: '✓' }),
+      h('span', { text: examFeesCoveredLine() }),
+    ),
     h(
       'ul',
       { class: 'tick-list' },
